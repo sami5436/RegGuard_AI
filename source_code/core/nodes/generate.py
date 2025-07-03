@@ -19,9 +19,12 @@ def generate_answer(state: Dict, llm) -> Dict[str, Any]:
 
     Answer:
     """
+    # prompttemplate helps us create a prompt that the LLM will use to generate an answer
     prompt = PromptTemplate(template=prompt_template, input_variables=["question", "context"])
+    # rag_chain is an object that combines the prompt with the LLM and an output parser
     rag_chain = prompt | llm | StrOutputParser()
-    
+    # We join the page contents of the documents to create a context string
     context_str = "\n\n".join([d.page_content for d in documents])
+    # we then provide the question and context to the rag_chain to get the answer
     generation = rag_chain.invoke({"question": question, "context": context_str})
     return {"generation": generation}

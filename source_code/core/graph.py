@@ -52,6 +52,8 @@ class RAGSystem:
         workflow = StateGraph(GraphState)
 
         # Bind dependencies to node functions
+        # the partial function allows us to bind the llm 
+        # to the functions so that they can be used without passing them explicitly
         bound_check_relevance = partial(check_relevance, llm=self.llm)
         bound_retrieve_documents = partial(retrieve_documents, retriever=self.vector_store_manager.get_retriever())
         bound_grade_documents = partial(grade_documents, llm=self.llm)
@@ -66,13 +68,28 @@ class RAGSystem:
         workflow.add_node("direct_answer", bound_direct_answer)
         workflow.add_node("handle_no_generation", self.handle_no_generation)
 
-        # Define edges
+        # we're saying start at the relevance
         workflow.set_entry_point("check_relevance")
+        
+        
+        # this coniditional edge will check if the question is relevant
+        # if it is, it will go to the retrieve node
+        # if it is not, it will go to the direct_answer node
         workflow.add_conditional_edges("check_relevance", self.decide_to_retrieve)
+        
+        # if the question is relevant, we retrieve documents
         workflow.add_edge("retrieve", "grade_documents")
+        
+        # if the documents are found, we grade them
         workflow.add_conditional_edges("grade_documents", self.decide_to_generate)
+        
+        # if the documents are relevant, we generate an answer
         workflow.add_edge("generate", END)
+        
+        # if the original question is not relevant, we generate a direct answer
         workflow.add_edge("direct_answer", END)
+        
+        # if no documents are found, we handle the case where generation is not possible
         workflow.add_edge("handle_no_generation", END)
 
         return workflow.compile()

@@ -14,7 +14,11 @@ def check_relevance(state: Dict, llm) -> Dict[str, Any]:
 
     Is this question related to emissions? (yes/no):
     """
+    # It is used to create a prompt that the LLM will use to determine if the question is relevant.
     prompt = PromptTemplate(template=prompt_template, input_variables=["question"])
+    
+    # relevance_checker is an object thats a chain that combines the prompt with the LLM and an output parser.
+    # The output parser will convert the LLM's response into a string.
     relevance_checker = prompt | llm | StrOutputParser()
     
     relevance_response = relevance_checker.invoke({"question": question})

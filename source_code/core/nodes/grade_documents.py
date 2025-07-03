@@ -19,11 +19,14 @@ def grade_documents(state: Dict, llm) -> Dict[str, Any]:
 
     Grade (yes/no):
     """
+    
     prompt = PromptTemplate(template=prompt_template, input_variables=["question", "document_content"])
     grader_chain = prompt | llm | StrOutputParser()
     
     filtered_docs = []
+    # go thru each document and grade it
     for d in documents:
+        # using the grader_chain object we invoke it with the question and document content
         score = grader_chain.invoke({"question": question, "document_content": d.page_content})
         grade = score.strip().lower()
         if "yes" in grade:
